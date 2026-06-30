@@ -12,11 +12,19 @@ Chạy lệnh sau trên VPS bằng user `root`:
 wget -N https://raw.githubusercontent.com/gencloud89/v2bx-tiktokproxy/main/install.sh && bash install.sh
 ```
 
-Sau khi chạy, script sẽ hỏi:
+Sau khi chạy, nếu là cài mới script sẽ hỏi:
+
+```text
+Bạn có muốn cài proxy TikTok không? [y/n]
+```
+
+Nếu chọn `y`, script sẽ hỏi tiếp:
 
 - proxy xoay/cư dân dạng `host:port`;
 - username proxy, có thể bỏ trống nếu proxy không cần auth;
 - password proxy, chỉ hỏi khi có username.
+
+Nếu chọn `n`, V2bX vẫn được cài bình thường. Bạn có thể cấu hình proxy TikTok sau bằng mục `18` trong menu hoặc lệnh `V2bX tiktok`.
 
 ## Menu quản lý
 

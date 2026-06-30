@@ -175,8 +175,19 @@ main() {
         echo -e "${yellow}Đã có cấu hình proxy TikTok, tự áp dụng lại logic cũ.${plain}"
         /usr/bin/V2bX tiktok-apply
     else
-        echo -e "${yellow}Bây giờ cấu hình proxy xoay/cư dân cho TikTok.${plain}"
-        /usr/bin/V2bX tiktok
+        echo
+        read -rp "Bạn có muốn cài proxy TikTok không? [y/n]: " install_tiktok_proxy
+        if [[ "$install_tiktok_proxy" == "y" || "$install_tiktok_proxy" == "Y" ]]; then
+            echo -e "${yellow}Bây giờ cấu hình proxy xoay/cư dân cho TikTok.${plain}"
+            /usr/bin/V2bX tiktok
+        else
+            echo -e "${yellow}Bỏ qua cấu hình proxy TikTok. Bạn có thể cấu hình sau bằng mục 18 trong menu hoặc lệnh: V2bX tiktok${plain}"
+            if [[ "$release" == 'alpine' ]]; then
+                service V2bX start || true
+            else
+                systemctl start V2bX || true
+            fi
+        fi
     fi
     echo -e "${green}Cài đặt hoàn tất.${plain}"
     echo "Lệnh sử dụng:"
