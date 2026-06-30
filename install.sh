@@ -10,8 +10,9 @@ REPO='gencloud89/v2bx-tiktokproxy'
 RAW_BASE='https://raw.githubusercontent.com/gencloud89/v2bx-tiktokproxy/main'
 V2BX_DIR='/usr/local/V2bX'
 ETC_DIR='/etc/V2bX'
+GITHUB_ENV_FILE="$ETC_DIR/tiktokproxy-github.env"
 
-[[ $EUID -ne 0 ]] && echo -e "${red}Error:${plain} please run as root." && exit 1
+[[ $EUID -ne 0 ]] && echo -e "${red}Lỗi:${plain} vui lòng chạy bằng root." && exit 1
 
 release=''
 if [[ -f /etc/redhat-release ]]; then
@@ -30,6 +31,34 @@ else
     echo -e "${red}Unsupported OS.${plain}"
     exit 1
 fi
+
+
+load_github_token() {
+    if [[ -f "$GITHUB_ENV_FILE" ]]; then
+        # shellcheck disable=SC1090
+        source "$GITHUB_ENV_FILE"
+    fi
+    : "${GITHUB_TOKEN:=}"
+}
+
+save_github_token() {
+    mkdir -p "$ETC_DIR"
+    if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+        umask 077
+        printf 'GITHUB_TOKEN=%q\n' "$GITHUB_TOKEN" > "$GITHUB_ENV_FILE"
+        chmod 600 "$GITHUB_ENV_FILE"
+    fi
+}
+
+fetch_url() {
+    local url="$1" out="$2"
+    load_github_token
+    if [[ -n "$GITHUB_TOKEN" ]]; then
+        curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" "$url" -o "$out"
+    else
+        curl -fsSL "$url" -o "$out"
+    fi
+}
 
 arch=$(uname -m)
 case "$arch" in
@@ -127,27 +156,35 @@ EOF_SERVICE
 }
 
 install_manager() {
-    curl -fsSL "$RAW_BASE/bin/V2bX.sh" -o /usr/bin/V2bX
+    save_github_token
+    fetch_url "$RAW_BASE/bin/V2bX.sh" /usr/bin/V2bX
     chmod +x /usr/bin/V2bX
     ln -sf /usr/bin/V2bX /usr/bin/v2bx
-    curl -fsSL "$RAW_BASE/install.sh" -o "$V2BX_DIR/install-tiktokproxy.sh" || true
+    fetch_url "$RAW_BASE/install.sh" "$V2BX_DIR/install-tiktokproxy.sh" || true
 }
 
 main() {
-    echo -e "${green}Start installing V2bX TikTokProxy${plain}"
+    load_github_token
+    save_github_token
+    echo -e "${green}Bắt đầu cài V2bX TikTokProxy${plain}"
     install_base
     install_v2bx_binary "${1:-}"
     install_service
     install_manager
-    echo -e "${yellow}Now configure TikTok residential proxy.${plain}"
-    /usr/bin/V2bX tiktok
-    echo -e "${green}Install complete.${plain}"
-    echo "Commands:"
-    echo "  V2bX                Show menu"
-    echo "  V2bX tiktok         Configure TikTok proxy"
-    echo "  V2bX tiktok-status  Check TikTok routing"
-    echo "  V2bX update         Update V2bX binary and preserve TikTok logic"
-    echo "  V2bX update-script  Update this manager script"
+    if [[ -f "$ETC_DIR/tiktok-proxy.env" ]]; then
+        echo -e "${yellow}Đã có cấu hình proxy TikTok, tự áp dụng lại logic cũ.${plain}"
+        /usr/bin/V2bX tiktok-apply
+    else
+        echo -e "${yellow}Bây giờ cấu hình proxy xoay/cư dân cho TikTok.${plain}"
+        /usr/bin/V2bX tiktok
+    fi
+    echo -e "${green}Cài đặt hoàn tất.${plain}"
+    echo "Lệnh sử dụng:"
+    echo "  V2bX                Hiển thị menu"
+    echo "  V2bX tiktok         Cấu hình proxy TikTok"
+    echo "  V2bX tiktok-status  Kiểm tra route TikTok"
+    echo "  V2bX update         Cập nhật V2bX và giữ logic TikTok"
+    echo "  V2bX update-script  Cập nhật script quản lý"
 }
 
 main "$@"

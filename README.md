@@ -1,92 +1,111 @@
 # v2bx-tiktokproxy
 
-One-command V2bX installer with built-in TikTok/ByteDance residential proxy routing.
+Bản cài V2bX riêng cho nhu cầu dùng TikTok qua proxy xoay/cư dân.
 
-This project keeps the official V2bX binary from `wyx2685/V2bX`, then adds a dedicated configuration layer for TikTok:
+Repo này **không sửa binary V2bX gốc**. Script vẫn tải V2bX chính thức từ release của `wyx2685/V2bX`, sau đó tự cấu hình thêm route/outbound để TikTok và ByteDance đi qua proxy cư dân.
 
-- asks for rotating/residential HTTP proxy host, port, username, and password during install;
-- creates `tiktok-residential` outbound;
-- routes TikTok and ByteDance domains to the residential proxy;
-- blocks UDP/443 so TikTok falls back from QUIC/IP-only traffic to TCP that can pass through the HTTP proxy;
-- installs a menu with TikTok-specific options;
-- installs daily `geosite.dat` and `geoip.dat` update cron;
-- keeps TikTok proxy logic when updating V2bX.
+## Cài đặt một lệnh
 
-## One-Line Install
+Vì repo này là private, VPS cần có GitHub token có quyền đọc repo private. Chạy lệnh sau và thay `GH_TOKEN_CUA_BAN` bằng token của bạn:
 
 ```bash
-wget -N https://raw.githubusercontent.com/gencloud89/v2bx-tiktokproxy/main/install.sh && bash install.sh
+GITHUB_TOKEN='GH_TOKEN_CUA_BAN' bash -c 'wget --header="Authorization: Bearer ${GITHUB_TOKEN}" -O install.sh https://raw.githubusercontent.com/gencloud89/v2bx-tiktokproxy/main/install.sh && bash install.sh'
 ```
 
-Install a specific official V2bX version:
+Sau khi chạy, script sẽ hỏi:
 
-```bash
-wget -N https://raw.githubusercontent.com/gencloud89/v2bx-tiktokproxy/main/install.sh && bash install.sh v0.4.0
-```
+- proxy xoay/cư dân dạng `host:port`;
+- username proxy, có thể bỏ trống nếu proxy không cần auth;
+- password proxy, chỉ hỏi khi có username.
 
-## Menu
+Token GitHub được lưu ở `/etc/V2bX/tiktokproxy-github.env` với quyền `600` để menu có thể tự cập nhật script/template từ repo private về sau.
 
-After installation:
+## Menu quản lý
+
+Sau khi cài xong, chạy:
 
 ```bash
 V2bX
 ```
 
-Useful commands:
+Menu giữ kiểu V2bX gốc, đã Việt hoá và thêm mục:
 
-```bash
-V2bX tiktok          # configure proxy and apply TikTok routing
-V2bX tiktok-apply    # re-apply current TikTok routing without changing proxy
-V2bX tiktok-status   # check recent TikTok detours and proxy connections
-V2bX update-rules    # update geosite.dat and geoip.dat
-V2bX update          # update official V2bX binary and preserve TikTok logic
-V2bX update-script   # update this installer/menu layer from GitHub
+```text
+18. Cấu hình proxy TikTok
 ```
 
-## Files Installed On Server
+Các lệnh nhanh:
+
+```bash
+V2bX tiktok          # cấu hình lại proxy TikTok
+V2bX tiktok-apply    # áp dụng lại route/outbound TikTok bằng proxy đã lưu
+V2bX tiktok-status   # xem log route TikTok và số kết nối proxy
+V2bX update-rules    # cập nhật geosite.dat/geoip.dat
+V2bX update          # cập nhật V2bX bản mới nhất và giữ logic TikTok
+V2bX update-script   # cập nhật script menu từ repo private
+```
+
+## Cơ chế TikTok proxy
+
+Script tự tạo/cập nhật các file:
 
 - `/etc/V2bX/config.json`
 - `/etc/V2bX/route.json`
 - `/etc/V2bX/custom_outbound.json`
-- `/etc/V2bX/tiktok-proxy.env` with mode `600`
+- `/etc/V2bX/tiktok-proxy.env`
 - `/usr/local/V2bX/update-rules-dat.sh`
 - `/etc/cron.d/v2bx-rules-dat`
 - `/usr/bin/V2bX`
 - `/usr/bin/v2bx`
 
-## TikTok Routing Logic
+Logic route:
 
-Rule order:
+1. Chặn IP private.
+2. Chặn BitTorrent.
+3. Chặn TikTok/ByteDance UDP/443.
+4. Đưa TikTok/ByteDance TCP/domain qua outbound `tiktok-residential`.
+5. Chặn UDP/443 tổng quát để tránh QUIC/IP-only đi lệch proxy.
+6. Netflix đi IPv6 outbound.
+7. Traffic còn lại đi IPv4 outbound.
 
-1. block private IP ranges;
-2. block BitTorrent;
-3. block TikTok/ByteDance UDP/443;
-4. route TikTok/ByteDance domains to `tiktok-residential`;
-5. block global UDP/443 to prevent QUIC/IP-only bypass;
-6. route Netflix to IPv6 outbound;
-7. route all remaining traffic to IPv4 outbound.
+Danh sách TikTok gồm:
 
-The route contains `geosite:tiktok`, `geosite:bytedance`, and a manual fallback list for TikTok/ByteDance CDN domains such as `ibyteimg.com`, `byteimg.com`, `tiktokcdn.com`, `tiktokv.com`, `amemv.com`, and related domains.
+- `geosite:tiktok`
+- `geosite:bytedance`
+- các domain CDN/media fallback như `ibyteimg.com`, `byteimg.com`, `tiktokcdn.com`, `tiktokv.com`, `amemv.com`, `ibytedtos.com`, `bytetos.com`, `pstatp.com`, `snssdk.com` và các domain liên quan.
 
-## Auto Update
+## Cơ chế cập nhật thường xuyên
 
-The installer creates:
+Script cài cron:
 
 ```cron
 17 4 * * * root /usr/local/V2bX/update-rules-dat.sh >> /var/log/v2bx-rules-dat.log 2>&1
 ```
 
-The updater downloads the latest `geosite.dat` and `geoip.dat` from Loyalsoldier releases and restarts V2bX only if files changed.
+Mỗi ngày cron sẽ tải `geosite.dat` và `geoip.dat` mới từ Loyalsoldier release. Nếu file thay đổi, V2bX sẽ tự restart.
 
-## Verify TikTok Traffic
+Khi chọn cập nhật V2bX trong menu hoặc chạy:
+
+```bash
+V2bX update
+```
+
+script sẽ tải binary V2bX mới nhất, sau đó tự áp dụng lại route/outbound TikTok bằng proxy đã lưu. Như vậy update không làm mất logic TikTok cũ.
+
+## Kiểm tra TikTok có đi proxy không
 
 ```bash
 V2bX tiktok-status
+```
+
+Hoặc kiểm tra thủ công:
+
+```bash
 journalctl -u V2bX --since "2 minutes ago" --no-pager -l | grep -Ei 'tiktok|ibyte|byteimg|tiktok-residential|8779|Limited'
 ss -tnp | grep ':8779'
 ```
 
-Good signs:
+Dấu hiệu đúng:
 
 ```text
 taking detour [tiktok-residential]
@@ -94,8 +113,14 @@ dialing TCP to tcp:<proxy-host>:<proxy-port>
 accepted ... -> tiktok-residential
 ```
 
-## Notes
+Nếu vẫn không dùng được TikTok dù đã thấy log đi proxy, cần kiểm tra thêm:
 
-- Proxy credentials are saved locally on the node in `/etc/V2bX/tiktok-proxy.env` and are not printed by the docs.
-- If TikTok still fails while detours are visible, check `Limited ... by conn or ip` and proxy quality/region.
-- Global UDP/443 blocking is intentional for TikTok compatibility, but it can reduce QUIC performance for other applications.
+- proxy cư dân có bị TikTok chặn IP/region không;
+- tốc độ và độ ổn định của proxy;
+- log `Limited ... by conn or ip`, nghĩa là bị giới hạn kết nối/IP trước khi route ra proxy.
+
+## Ghi chú bảo mật
+
+- Không đưa proxy password hoặc API key vào README/release note.
+- Proxy lưu tại `/etc/V2bX/tiktok-proxy.env`, quyền `600`.
+- GitHub token lưu tại `/etc/V2bX/tiktokproxy-github.env`, quyền `600`.
