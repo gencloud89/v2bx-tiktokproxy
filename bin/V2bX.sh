@@ -369,9 +369,13 @@ update_shell() {
 show_tiktok_status() {
     load_proxy_env
     echo "Proxy TikTok: ${TIKTOK_PROXY_HOST:-chưa cấu hình}:${TIKTOK_PROXY_PORT:-}"
-    echo "Kết nối proxy đang mở: $(ss -tnp 2>/dev/null | grep -c ':8779' || true)"
+    if [[ -n "${TIKTOK_PROXY_PORT:-}" ]]; then
+        echo "Kết nối proxy đang mở: $(ss -tnp 2>/dev/null | grep -c ":${TIKTOK_PROXY_PORT}" || true)"
+    else
+        echo "Kết nối proxy đang mở: 0"
+    fi
     echo "Log TikTok gần đây:"
-    journalctl -u V2bX --since '5 minutes ago' --no-pager -l 2>/dev/null | grep -Ei 'tiktok|ibyte|byteimg|tiktok-residential|Limited' | tail -30 || true
+    journalctl -u V2bX --since '5 minutes ago' --no-pager -l 2>/dev/null | grep -Ei "tiktok|ibyte|byteimg|tiktok-residential|${TIKTOK_PROXY_HOST:-proxyxoay}|${TIKTOK_PROXY_PORT:-proxy}|Limited" | tail -30 || true
     [[ $# == 0 ]] && before_show_menu
 }
 
