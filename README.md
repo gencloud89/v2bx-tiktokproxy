@@ -26,6 +26,41 @@ Nếu chọn `y`, script sẽ hỏi tiếp:
 
 Nếu chọn `n`, V2bX vẫn được cài bình thường. Bạn có thể cấu hình proxy TikTok sau bằng mục `18` trong menu hoặc lệnh `V2bX tiktok`.
 
+## Chuyển node V2bX cũ sang bản TikTokProxy
+
+Dùng lệnh này cho VPS **đã có V2bX đang chạy** và cần giữ nguyên cấu hình server/node hiện tại:
+
+```bash
+wget -N https://raw.githubusercontent.com/gencloud89/v2bx-tiktokproxy/main/migrate-existing.sh && bash migrate-existing.sh
+```
+
+Script migrate sẽ:
+
+- kiểm tra node đã có `/etc/V2bX/config.json`;
+- backup `/etc/V2bX`, binary V2bX, menu cũ và service vào `/root/v2bx-migrate-tiktokproxy-*`;
+- cài menu quản lý mới `/usr/bin/V2bX` và `/usr/bin/v2bx`;
+- không ghi đè `config.json`, token panel, node id, node type, API host, hoặc cấu hình server hiện có;
+- hỏi có muốn cập nhật binary V2bX mới nhất không, mặc định là **không**;
+- thêm `/etc/V2bX/route.json`, `/etc/V2bX/custom_outbound.json`, `/etc/V2bX/tiktok-proxy.env`;
+- tự thêm `RouteConfigPath` và `OutboundConfigPath` vào config cũ;
+- restart V2bX và giữ logic TikTok proxy.
+
+Chạy nhanh không cần hỏi proxy:
+
+```bash
+TIKTOK_PROXY='s14.proxyxoay.net:8837' \
+TIKTOK_PROXY_USER='sennet898' \
+TIKTOK_PROXY_PASS='sennet898' \
+UPDATE_V2BX=n \
+bash <(curl -fsSL https://raw.githubusercontent.com/gencloud89/v2bx-tiktokproxy/main/migrate-existing.sh)
+```
+
+Nếu muốn đồng thời cập nhật binary V2bX lên bản mới nhất nhưng vẫn giữ `config.json` cũ:
+
+```bash
+UPDATE_V2BX=y bash migrate-existing.sh
+```
+
 ## Menu quản lý
 
 Sau khi cài xong, chạy:

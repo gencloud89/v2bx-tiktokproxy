@@ -377,6 +377,7 @@ show_tiktok_status() {
     echo "Log TikTok gần đây:"
     journalctl -u V2bX --since '5 minutes ago' --no-pager -l 2>/dev/null | grep -Ei "tiktok|ibyte|byteimg|tiktok-residential|${TIKTOK_PROXY_HOST:-proxyxoay}|${TIKTOK_PROXY_PORT:-proxy}|Limited" | tail -30 || true
     [[ $# == 0 ]] && before_show_menu
+    return 0
 }
 
 show_menu() {
