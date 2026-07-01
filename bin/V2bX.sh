@@ -231,12 +231,11 @@ generate_x25519_key() {
 }
 
 generate_config_file() {
-    fetch_url "${RAW_BASE}/install.sh" /tmp/v2bx-tiktok-install.sh >/dev/null 2>&1 || true
-    curl -o /tmp/initconfig.sh -Ls https://raw.githubusercontent.com/wyx2685/V2bX-script/master/initconfig.sh
-    # shellcheck disable=SC1091
-    source /tmp/initconfig.sh
-    rm -f /tmp/initconfig.sh
-    generate_config_file
+    fetch_url "$RAW_BASE/templates/quick-config.py" /tmp/v2bx-quick-config.py
+    python3 /tmp/v2bx-quick-config.py
+    rm -f /tmp/v2bx-quick-config.py
+    restart 0
+    [[ $# == 0 ]] && before_show_menu
 }
 
 allow_ports() {
@@ -448,5 +447,6 @@ case "${1:-menu}" in
     tiktok-status) show_tiktok_status 0 ;;
     update-rules|rules) update_rules_dat 0 ;;
     update-script|self-update) update_shell ;;
+    quick-config|config-wizard) generate_config_file 0 ;;
     *) show_menu ;;
 esac

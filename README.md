@@ -15,6 +15,29 @@ wget -N https://raw.githubusercontent.com/gencloud89/v2bx-tiktokproxy/main/insta
 Sau khi chạy, nếu là cài mới script sẽ hỏi:
 
 ```text
+Bạn có muốn thiết lập server config nhanh không? [y/n]
+```
+
+Nếu chọn `y`, script sẽ hỏi theo từng bước:
+
+- `API Host panel`: nhập một lần, dùng chung cho mọi node trong VPS;
+- `API Key / Server token`: nhập một lần, dùng chung cho mọi node trong VPS;
+- `Core muốn dùng`: chọn bằng số, gồm `xray`, `sing`, `hysteria2`;
+- `Node type`: chọn bằng số, gồm `shadowsocks`, `vmess`, `vless`, `trojan`, `hysteria`, `hysteria2`, `tuic`, `anytls`;
+- `Node ID`: tự nhập theo ID trên panel;
+- các tuỳ chọn nhanh như timeout, listen IP, send IP, proxy protocol, TFO, UoT.
+
+Sau mỗi node, script sẽ hỏi:
+
+```text
+Bạn có muốn thiết lập thêm node khác trên VPS này không?
+```
+
+Nếu chọn `y`, API Host/API Key vẫn dùng chung, chỉ nhập lại core/node type/node ID và tuỳ chọn của node mới. Nếu chọn `n`, script ghi `/etc/V2bX/config.json` và tiếp tục cài đặt bình thường.
+
+Sau đó script hỏi tiếp:
+
+```text
 Bạn có muốn cài proxy TikTok không? [y/n]
 ```
 
@@ -81,6 +104,7 @@ Các lệnh nhanh:
 V2bX tiktok          # cấu hình lại proxy TikTok
 V2bX tiktok-apply    # áp dụng lại route/outbound TikTok bằng proxy đã lưu
 V2bX tiktok-status   # xem log route TikTok và số kết nối proxy
+V2bX quick-config    # thiết lập nhanh /etc/V2bX/config.json
 V2bX update-rules    # cập nhật geosite.dat/geoip.dat
 V2bX update          # cập nhật V2bX bản mới nhất và giữ logic TikTok
 V2bX update-script   # cập nhật script menu từ repo private

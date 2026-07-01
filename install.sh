@@ -163,6 +163,12 @@ install_manager() {
     fetch_url "$RAW_BASE/install.sh" "$V2BX_DIR/install-tiktokproxy.sh" || true
 }
 
+quick_config_wizard() {
+    fetch_url "$RAW_BASE/templates/quick-config.py" /tmp/v2bx-quick-config.py
+    python3 /tmp/v2bx-quick-config.py
+    rm -f /tmp/v2bx-quick-config.py
+}
+
 main() {
     load_github_token
     save_github_token
@@ -171,6 +177,13 @@ main() {
     install_v2bx_binary "${1:-}"
     install_service
     install_manager
+    echo
+    read -rp "Bạn có muốn thiết lập server config nhanh không? [y/n]: " setup_server_config
+    if [[ "$setup_server_config" == "y" || "$setup_server_config" == "Y" ]]; then
+        quick_config_wizard
+    else
+        echo -e "${yellow}Bỏ qua thiết lập server config nhanh, tiếp tục cài đặt bình thường.${plain}"
+    fi
     if [[ -f "$ETC_DIR/tiktok-proxy.env" ]]; then
         echo -e "${yellow}Đã có cấu hình proxy TikTok, tự áp dụng lại logic cũ.${plain}"
         /usr/bin/V2bX tiktok-apply
