@@ -27,6 +27,8 @@ Nếu chọn `y`, script sẽ hỏi theo từng bước:
 - `Node ID`: tự nhập theo ID trên panel;
 - các tuỳ chọn nhanh như timeout, listen IP, send IP, proxy protocol, TFO, UoT.
 
+Wizard không tự thêm `DeviceOnlineMinTraffic`; nếu cần ngưỡng online thiết bị riêng, cấu hình ở panel/server config nâng cao sau.
+
 Sau mỗi node, script sẽ hỏi:
 
 ```text

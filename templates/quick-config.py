@@ -131,9 +131,8 @@ def build_node(api_host, api_key):
         "Timeout": int(ask("Timeout API giây", "30", required=True)),
         "ListenIP": ask("Listen IP", "0.0.0.0", required=True),
         "SendIP": ask("Send IP", "0.0.0.0", required=True),
-        "DeviceOnlineMinTraffic": int(ask("Device online min traffic byte", "1000", required=True)),
         "EnableProxyProtocol": ask_yes_no("Bật Proxy Protocol", False),
-        "EnableTFO": ask_yes_no("Bật TCP Fast Open", True),
+        "EnableTFO": ask_yes_no("Bật TCP Fast Open", False),
         "EnableUot": ask_yes_no("Bật UDP over TCP/UoT nếu core hỗ trợ", True),
         "CertConfig": {
             "CertMode": "none",
